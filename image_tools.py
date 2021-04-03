@@ -1,9 +1,6 @@
-
-from typing import List, Tuple
-
 import numpy as np
 from PIL import Image, ImageDraw
-from os import listdir, makedirs
+
 
 def load_image(file: str):
     im = Image.open(file).convert('L')
