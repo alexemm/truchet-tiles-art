@@ -12,22 +12,38 @@ def optimal_point(brightness: float) -> float:
         return 2. * brightness - 0.5
 
 
-def color_of_tile(x: float, y: float, mid_point: float) -> int:
-    is_in_area1: bool = y < (mid_point - 1) / mid_point * x + 1
-    is_in_area2: bool = y < mid_point / (1 - mid_point) * (1 - x)
-    if mid_point <= 0.5:
-        return 255 * (int(is_in_area1 or is_in_area2))
+def linear_midpoint_curve(x: float, y: float, s: float) -> int:
+    is_in_area1: bool = y < (s - 1) / s * x + 1
+    is_in_area2: bool = y < s / (1 - s) * (1 - x)
+    if s <= 0.5:
+        return 255 * int(is_in_area1 or is_in_area2)
     else:
-        return 255 * (int(is_in_area1 and is_in_area2))
+        return 255 * int(is_in_area1 and is_in_area2)
+
+
+def quadratic_midpoint_curve(x: float, y: float, s: float) -> int:
+    is_in_area3: bool = y < (-2 * s + 1) / (s - s ** 2) * x ** 2 + (s ** 2 + s - 1) / (s - s ** 2) * x + 1
+    return 255 * int(is_in_area3)
+
+
+curve_modes = {
+    'linear': linear_midpoint_curve,
+    'quadratic': quadratic_midpoint_curve
+}
+
+
+def color_of_tile(x: float, y: float, s: float, curve: str = 'linear') -> int:
+    return curve_modes[curve](x, y, s)
 
 
 def midpoint(t: float):
     return 0.25 + 0.5 * t
 
 
-def truchet_tile(size: int, brightness: float, rotation: int = 0):
-    ret = np.fromfunction(np.vectorize(lambda x, y: color_of_tile(x/size, y/size, midpoint(optimal_point(brightness)))),
-                          (size, size))
+def truchet_tile(size: int, brightness: float, rotation: int = 0, curve_mode: str = 'linear'):
+    ret = np.fromfunction(
+        np.vectorize(lambda x, y: color_of_tile(x / size, y / size, midpoint(optimal_point(brightness)), curve_mode)),
+        (size, size))
     for _ in range(0, rotation):
         # Rotate matrix if other type is used
         ret = np.rot90(ret)
@@ -47,4 +63,3 @@ def truchet_image(arr, size, pattern: List[List[int]], tile_size: Optional[int] 
             new_row.append(truchet_tile(tile_size, column, pattern[i % n][j % m]))
         new_mat.append(new_row)
     return np.block(new_mat)
-
